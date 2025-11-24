@@ -20,8 +20,21 @@ class DataPreprocessor:
             
         Returns:
             DataFrame with features
+        
+        Raises:
+            ValueError: If insufficient data is provided
         """
         df = df.copy()
+        
+        # Validate input data
+        if df.empty:
+            raise ValueError("Input DataFrame is empty. Cannot create features.")
+        
+        if len(df) < 30:
+            raise ValueError(
+                f"Insufficient data: {len(df)} rows provided, but at least 30 rows "
+                f"are required for feature engineering (SMA_30 requires 30 days of data)."
+            )
         
         # Simple Moving Averages
         df['SMA_7'] = df['close'].rolling(window=7).mean()
@@ -63,6 +76,14 @@ class DataPreprocessor:
         # Drop NaN values
         df = df.dropna()
         
+        # Validate processed data
+        if df.empty:
+            raise ValueError(
+                "All rows were dropped after feature engineering. "
+                "This typically happens when there is insufficient data. "
+                "Please provide more historical data."
+            )
+        
         return df
     
     def prepare_data_for_models(self, df, lookback=60, split_ratio=0.8):
@@ -76,8 +97,22 @@ class DataPreprocessor:
             
         Returns:
             Tuple of (X_train, X_test, y_train, y_test, scaler)
+            
+        Raises:
+            ValueError: If insufficient data is provided
         """
         df = df.copy()
+        
+        # Validate input data
+        if df.empty:
+            raise ValueError("Input DataFrame is empty. Cannot prepare data for models.")
+        
+        min_required = lookback + FORECAST_DAYS + 1
+        if len(df) < min_required:
+            raise ValueError(
+                f"Insufficient data: {len(df)} rows provided, but at least {min_required} rows "
+                f"are required (lookback={lookback} + forecast_days={FORECAST_DAYS} + 1)."
+            )
         
         # Extract close prices
         close_prices = df['close'].values.reshape(-1, 1)
@@ -112,8 +147,22 @@ class DataPreprocessor:
             
         Returns:
             Tuple of (X_train, X_test, y_train, y_test, feature_names, scaler)
+            
+        Raises:
+            ValueError: If insufficient data is provided
         """
         df = df.copy()
+        
+        # Validate input data
+        if df.empty:
+            raise ValueError("Input DataFrame is empty. Cannot prepare data for models.")
+        
+        min_required = lookback + FORECAST_DAYS + 1
+        if len(df) < min_required:
+            raise ValueError(
+                f"Insufficient data: {len(df)} rows provided, but at least {min_required} rows "
+                f"are required (lookback={lookback} + forecast_days={FORECAST_DAYS} + 1)."
+            )
         
         # Feature columns
         feature_cols = ['open', 'high', 'low', 'close', 'volume',
